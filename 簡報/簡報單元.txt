@@ -1,0 +1,300 @@
+
+  | Part | 實作步驟數 | 核心動作           |
+  |------|-------|----------------|
+  | 1    | 12 步驟 | CMD 指令 + 建立檔案  |
+  | 2    | 6 步驟  | 寫程式 + 執行 + 瀏覽器 |
+  | 3    | 4 步驟  | 修改程式 + 理解邏輯    |
+  | 4    | 4 步驟  | Postman 操作     |
+  | 5    | 4 步驟  | 雙視窗測試          |
+  | 6    | 3 步驟  | HTML/CSS/JS    |
+  | 7    | 11 步驟 | 前後端串接 + 開發者工具  |
+  | 8    | 5 步驟  | 建立部署檔案         |
+
+各 Part 詳細實作步驟
+
+  Part 1：環境準備（12 個實作步驟）
+
+  📂 對應 GitHub：2.4_打造AI對話API/階段一_建立AI對話功能/
+
+  【實作 1】檢查 Python 版本
+  CMD 輸入：python --version
+  預期結果：Python 3.11.0 或更高
+
+  【實作 2】檢查 pip 版本
+  CMD 輸入：pip --version
+  預期結果：pip 23.0.1
+
+  【實作 3】建立工作目錄
+  CMD 輸入：cd Desktop
+  CMD 輸入：mkdir AI_Projects
+
+  【實作 4】建立專案資料夾
+  CMD 輸入：cd AI_Projects
+  CMD 輸入：mkdir ch2_local_ai_app
+  CMD 輸入：cd ch2_local_ai_app
+
+  【實作 5】建立虛擬環境
+  CMD 輸入：python -m venv venv
+
+  【實作 6】啟動虛擬環境
+  Windows CMD：venv\Scripts\activate
+  Windows PowerShell：venv\Scripts\Activate.ps1
+  預期結果：提示符前面出現 (venv)
+
+  【實作 7】安裝 Flask
+  CMD 輸入：pip install flask
+
+  【實作 8】安裝 OpenAI SDK
+  CMD 輸入：pip install openai
+
+  【實作 9】安裝環境變數工具
+  CMD 輸入：pip install python-dotenv
+
+  【實作 10】確認套件安裝
+  CMD 輸入：pip list
+  預期結果：看到 flask、openai、python-dotenv
+
+  【實作 11】建立 .env 檔案
+  建立檔案：.env
+  內容：OPENAI_API_KEY=sk-proj-你的API金鑰
+
+  【實作 12】建立 .gitignore 檔案
+  建立檔案：.gitignore
+  內容：
+  venv/
+  .env
+  __pycache__/
+
+  ✅ 完成檢查：(venv) 提示符 + pip list 顯示套件
+
+  ---
+  Part 2：第一個 Flask 應用（6 個實作步驟）
+
+  📂 對應 GitHub：2.3_Flask快速入門/
+
+  【實作 1】建立 app.py 檔案
+  建立檔案：app.py
+
+  【實作 2】撰寫 Flask 程式
+  貼上完整程式碼（顯示在簡報中）
+
+  【實作 3】理解程式碼
+  - 第 1-6 列：建立應用程式
+  - 第 8-31 列：定義路由
+  - 第 33-35 列：啟動應用
+
+  【實作 4】執行 Flask 應用
+  CMD 輸入：python app.py
+  預期結果：
+   * Running on http://127.0.0.1:5000
+
+  【實作 5】瀏覽器測試
+  開啟瀏覽器，輸入：http://localhost:5000/
+  預期結果：看到「歡迎來到 Flask 世界！」
+
+  【實作 6】停止應用
+  CMD 按：Ctrl + C
+
+  ✅ 完成檢查：瀏覽器顯示歡迎頁面
+
+  ---
+  Part 3：建立 AI 對話 API（4 個實作步驟）
+
+  📂 對應 GitHub：2.4_打造AI對話API/階段一_建立AI對話功能/
+
+  【實作 1】修改 app.py
+  替換為包含 OpenAI 的完整程式碼（78 列）
+
+  【實作 2】理解程式碼結構
+  - 第 1-14 列：套件引入與初始化
+  - 第 16-33 列：首頁路由
+  - 第 35-78 列：AI 對話端點 /chat
+
+  【實作 3】理解 /chat 端點邏輯
+  1. 接收 POST 請求
+  2. 取得 message 欄位
+  3. 呼叫 OpenAI API
+  4. 回傳 AI 回應
+
+  【實作 4】啟動伺服器準備測試
+  CMD 輸入：python app.py
+  預期結果：Running on http://127.0.0.1:5000
+  ⚠️ 不要關閉這個視窗！
+
+  ✅ 完成檢查：伺服器運行中
+
+  ---
+  Part 4：Postman 測試 API（4 個實作步驟）
+
+  📂 對應 GitHub：2.4_打造AI對話API/階段一_建立AI對話功能/
+
+  【實作 1】下載並開啟 Postman
+  網址：https://www.postman.com/downloads/
+  💡 可點「Skip and go to the app」跳過登入
+
+  【實作 2】建立 POST 請求
+  1. 點 New → HTTP Request
+  2. GET 改為 POST
+  3. URL 輸入：http://localhost:5000/chat
+
+  【實作 3】設定 Body（最重要！）
+  1. 點 Body
+  2. 選 raw
+  3. 右側選 JSON
+  4. 輸入：
+  {
+      "message": "你好，請介紹一下你自己"
+  }
+  🟥 必須要有 { } 和英文雙引號！
+
+  【實作 4】發送請求
+  1. 點 Send
+  2. 等待幾秒
+  預期結果：200 OK
+  {
+      "success": true,
+      "message": "你好！我是 AI 助手..."
+  }
+
+  ✅ 完成檢查：Postman 顯示 200 OK + AI 回應
+
+  ---
+  Part 5：Python 腳本測試（4 個實作步驟）
+
+  📂 對應 GitHub：2.4_打造AI對話API/階段一_建立AI對話功能/
+
+  ⚠️ 重要：需要兩個 CMD 視窗！
+  ┌──────────────────┐  ┌──────────────────┐
+  │ CMD 1（伺服器）   │  │ CMD 2（測試）     │
+  │ python app.py    │  │ python test_api.py│
+  └──────────────────┘  └──────────────────┘
+
+  【實作 1】安裝 requests 套件
+  CMD 輸入：pip install requests
+
+  【實作 2】建立 test_api.py
+  建立檔案，貼上測試程式碼
+
+  【實作 3】確認伺服器運行中（CMD 視窗 1）
+  確認有顯示：Running on http://127.0.0.1:5000
+
+  【實作 4】執行測試腳本（CMD 視窗 2）
+  CMD 輸入：python test_api.py
+  預期結果：
+  狀態碼: 200
+  回應內容: {'success': True, 'message': '...'}
+
+  ✅ 完成檢查：測試腳本顯示 200 + AI 回應
+
+  ---
+  Part 6：網頁介面 HTML/CSS/JS（3 個實作步驟）
+
+  📂 對應 GitHub：2.5_美化介面/階段一_HTML介面結構/
+
+  【實作 1】建立 templates 資料夾
+  CMD 輸入：mkdir templates
+
+  【實作 2】建立 index.html
+  建立檔案：templates/index.html
+  貼上完整 HTML 程式碼（約 200 列）
+
+  【實作 3】理解 HTML 結構
+  - <head>：CSS 樣式（漸層背景、對話氣泡）
+  - <body>：標題區、對話區、輸入區
+  - <script>：JavaScript 互動邏輯
+    - sendMessage() 函數
+    - fetch('/chat') 呼叫 API
+    - 動態新增對話氣泡
+
+  ✅ 完成檢查：templates/index.html 檔案建立
+
+  ---
+  Part 7：前後端串接與測試（11 個實作步驟）
+
+  📂 對應 GitHub：2.5_美化介面/階段三_測試與除錯/
+
+  【實作 1】修改 app.py 首頁路由
+  加入 render_template
+  from flask import ..., render_template
+
+  @app.route('/')
+  def home():
+      return render_template('index.html')
+
+  【實作 2】開啟 CMD 進入專案資料夾
+  CMD 輸入：cd 你的專案路徑
+
+  【實作 3】啟動 Flask 伺服器
+  CMD 輸入：python app.py
+  預期結果：Running on http://127.0.0.1:5000
+  🟥 不要關閉這個視窗！
+
+  【實作 4】開啟瀏覽器
+  輸入：http://localhost:5000/
+
+  【實作 5】確認介面顯示
+  預期看到：
+  - 漸層色標題「AI 對話助手」
+  - 白色對話區域
+  - 輸入框和發送按鈕
+
+  【實作 6】測試對話功能
+  輸入：你好，請介紹台灣的特色美食
+  點擊：發送
+  預期：
+  1. 你的訊息出現在右側（藍色）
+  2. 按鈕變成「思考中...」
+  3. AI 回應出現在左側（白色）
+
+  【實作 7】測試連續發送
+  發送多則訊息，觀察對話累積
+
+  【實作 8】測試空訊息
+  不輸入文字直接按發送
+  預期：沒有反應（正確行為）
+
+  【實作 9】開啟開發者工具
+  按鍵盤：F12
+
+  【實作 10】切換到 Network 分頁
+  點擊 Network（網路）
+
+  【實作 11】觀察 /chat 請求
+  發送一則訊息後：
+  1. 看到 chat 請求
+  2. 點擊查看 Payload：{"message": "..."}
+  3. 點擊查看 Response：{"success": true, ...}
+
+  ✅ 完成檢查：完整對話功能 + 開發者工具觀察
+
+  ---
+  Part 8：雲端部署準備（5 個實作步驟）
+
+  📂 對應 GitHub：2.6_雲端部署準備/
+
+  【實作 1】建立 requirements.txt
+  建立檔案，內容：
+  flask
+  openai
+  python-dotenv
+  gunicorn
+
+  【實作 2】建立 Procfile
+  建立檔案，內容：
+  web: gunicorn app:app
+
+  【實作 3】建立 runtime.txt
+  建立檔案，內容：
+  python-3.11.0
+
+  【實作 4】建立 .env.example
+  建立檔案，內容：
+  OPENAI_API_KEY=sk-proj-your-api-key-here
+
+  【實作 5】確認 .gitignore
+  確認包含：
+  .env
+  venv/
+  __pycache__/
+
+  ✅ 完成檢查：5 個部署檔案準備完成

@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 8：雲端部署準備</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        /* 導航列 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 1000;
+        }
+
+        .nav-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-links .fb-link {
+            color: #1877f2;
+        }
+
+        .nav-links .yt-link {
+            color: #ff0000;
+        }
+
+        .home-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .fullscreen-btn {
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 投影片容器 */
+        .slide-container {
+            padding-top: 80px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .slide {
+            display: none;
+            width: 90%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 首頁樣式 */
+        .title-slide {
+            text-align: center;
+            padding: 80px 40px;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #00d4ff, #00ff88, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8rem;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+
+        .title-slide .author {
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        /* 內頁標題 */
+        .slide h2 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 10px;
+        }
+
+        .slide h3 {
+            font-size: 1.5rem;
+            color: #00ff88;
+            margin: 20px 0 15px 0;
+        }
+
+        /* 內容樣式 */
+        .slide p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .slide ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .slide ul li {
+            font-size: 1.2rem;
+            line-height: 2;
+            padding-left: 30px;
+            position: relative;
+            color: #e0e0e0;
+        }
+
+        .slide ul li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #00ff88;
+        }
+
+        /* 程式碼區塊 */
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+
+        .code-block code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            color: #e6edf3;
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        /* 命令區塊 */
+        .cmd-block {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #00ff88;
+        }
+
+        .cmd-block code {
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #00ff88;
+        }
+
+        /* 步驟說明 */
+        .step-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-right: 15px;
+        }
+
+        /* 警告提示 */
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .warning-box::before {
+            content: '⚠️ ';
+        }
+
+        /* 成功提示 */
+        .success-box {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .success-box::before {
+            content: '✅ ';
+        }
+
+        /* 資訊提示 */
+        .info-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .info-box::before {
+            content: '💡 ';
+        }
+
+        /* 底部導航 */
+        .nav-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .slide-counter {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        /* 平台卡片 */
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .platform-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .platform-card h4 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .platform-card.render h4 {
+            color: #46e3b7;
+        }
+
+        .platform-card.vercel h4 {
+            color: #fff;
+        }
+
+        .platform-card.railway h4 {
+            color: #c5a3ff;
+        }
+
+        .platform-card p {
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .platform-card .feature {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin: 5px 5px 5px 0;
+        }
+
+        /* 比較表格 */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .compare-table th,
+        .compare-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .compare-table th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .compare-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* 分隔框 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card h4 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        /* 地端 vs 雲端比較 */
+        .compare-box {
+            display: flex;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .compare-item {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .compare-item.local {
+            border-top: 4px solid #ff6b6b;
+        }
+
+        .compare-item.cloud {
+            border-top: 4px solid #00ff88;
+        }
+
+        .compare-item h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .compare-item.local h4 {
+            color: #ff6b6b;
+        }
+
+        .compare-item.cloud h4 {
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="nav-title">Part 8：雲端部署準備</div>
+        <div class="nav-links">
+            <button class="home-btn" onclick="goToSlide(1)">🏠 首頁</button>
+            <a href="https://www.facebook.com/iddmail" target="_blank" class="fb-link">Facebook</a>
+            <a href="https://www.youtube.com/@TeachAI" target="_blank" class="yt-link">YouTube</a>
+            <button class="fullscreen-btn" onclick="toggleFullscreen()">全螢幕</button>
+        </div>
+    </nav>
+
+    <div class="slide-container">
+        <!-- 投影片 1：首頁 -->
+        <div class="slide title-slide active" id="slide1">
+            <h1>Part 8：雲端部署準備</h1>
+            <p class="subtitle">認識雲端平台與部署流程</p>
+            <p class="author">實作步驟教學</p>
+            <div style="margin-top: 50px;">
+                <p style="color: #888;">使用鍵盤 ← → 或點擊下方按鈕切換投影片</p>
+            </div>
+        </div>
+
+        <!-- 投影片 2：為什麼需要雲端部署 -->
+        <div class="slide" id="slide2">
+            <h2>為什麼需要雲端部署？</h2>
+
+            <div class="compare-box">
+                <div class="compare-item local">
+                    <h4>🖥️ 地端（本機）</h4>
+                    <ul>
+                        <li>只有你能使用</li>
+                        <li>電腦關機就停止</li>
+                        <li>無法分享給別人</li>
+                        <li>效能受限於個人電腦</li>
+                    </ul>
+                </div>
+                <div class="compare-item cloud">
+                    <h4>☁️ 雲端</h4>
+                    <ul>
+                        <li>任何人都能訪問</li>
+                        <li>24 小時不間斷</li>
+                        <li>有固定網址可分享</li>
+                        <li>可依需求擴展</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-box">
+                雲端部署讓你的應用從「個人專案」變成「可分享的服務」！
+            </div>
+        </div>
+
+        <!-- 投影片 3：三大雲端平台 -->
+        <div class="slide" id="slide3">
+            <h2>三大免費雲端平台</h2>
+
+            <div class="platform-grid">
+                <div class="platform-card render">
+                    <h4>🌿 Render</h4>
+                    <p>平衡性能與易用性</p>
+                    <div>
+                        <span class="feature">免費方案</span>
+                        <span class="feature">自動部署</span>
+                        <span class="feature">適合 Flask</span>
+                    </div>
+                </div>
+                <div class="platform-card vercel">
+                    <h4>▲ Vercel</h4>
+                    <p>前端優化的首選</p>
+                    <div>
+                        <span class="feature">全球 CDN</span>
+                        <span class="feature">超快速度</span>
+                        <span class="feature">適合前端</span>
+                    </div>
+                </div>
+                <div class="platform-card railway">
+                    <h4>🚂 Railway</h4>
+                    <p>開發者友善的新星</p>
+                    <div>
+                        <span class="feature">整合資料庫</span>
+                        <span class="feature">簡潔介面</span>
+                        <span class="feature">適合全端</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投影片 4：Render 介紹 -->
+        <div class="slide" id="slide4">
+            <h2>Render：初學者首選</h2>
+
+            <div class="step-box">
+                <h3>優點</h3>
+                <ul>
+                    <li>免費方案：750 小時/月（約一個月全天候運行）</li>
+                    <li>自動從 GitHub 部署</li>
+                    <li>支援 Python、Flask、Django</li>
+                    <li>自動 HTTPS 加密</li>
+                    <li>環境變數管理方便</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                免費應用會在沒有流量時休眠，第一次訪問需要幾秒喚醒
+            </div>
+
+            <div class="info-box">
+                網址：<a href="https://render.com" target="_blank" style="color: #00d4ff; text-decoration: none;">render.com</a>
+            </div>
+        </div>
+
+        <!-- 投影片 5：Vercel 介紹 -->
+        <div class="slide" id="slide5">
+            <h2>Vercel：前端專家</h2>
+
+            <div class="step-box">
+                <h3>優點</h3>
+                <ul>
+                    <li>全球 CDN，載入超快</li>
+                    <li>無限部署次數</li>
+                    <li>100GB 免費頻寬</li>
+                    <li>即時預覽功能</li>
+                    <li>自動 HTTPS</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                Serverless 架構，不適合需要長時間執行的後端應用
+            </div>
+
+            <div class="info-box">
+                網址：<a href="https://vercel.com" target="_blank" style="color: #00d4ff; text-decoration: none;">vercel.com</a>
+            </div>
+        </div>
+
+        <!-- 投影片 6：Railway 介紹 -->
+        <div class="slide" id="slide6">
+            <h2>Railway：整合高手</h2>
+
+            <div class="step-box">
+                <h3>優點</h3>
+                <ul>
+                    <li>內建資料庫支援（PostgreSQL、MySQL）</li>
+                    <li>自動偵測專案類型</li>
+                    <li>即時日誌查看</li>
+                    <li>協作功能</li>
+                    <li>$5 免費額度</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                免費額度用完需要付費，但小型應用每月只需幾美元
+            </div>
+
+            <div class="info-box">
+                網址：<a href="https://railway.app" target="_blank" style="color: #00d4ff; text-decoration: none;">railway.app</a>
+            </div>
+        </div>
+
+        <!-- 投影片 7：平台比較表 -->
+        <div class="slide" id="slide7">
+            <h2>三大平台比較</h2>
+
+            <table class="compare-table">
+                <tr>
+                    <th>項目</th>
+                    <th>Render</th>
+                    <th>Vercel</th>
+                    <th>Railway</th>
+                </tr>
+                <tr>
+                    <td>免費方案</td>
+                    <td>750 小時/月</td>
+                    <td>無限部署</td>
+                    <td>$5 額度</td>
+                </tr>
+                <tr>
+                    <td>最適合</td>
+                    <td>Flask 後端</td>
+                    <td>React 前端</td>
+                    <td>全端 + 資料庫</td>
+                </tr>
+                <tr>
+                    <td>冷啟動</td>
+                    <td>有（幾秒）</td>
+                    <td>極快</td>
+                    <td>無</td>
+                </tr>
+                <tr>
+                    <td>資料庫</td>
+                    <td>需另外設定</td>
+                    <td>不支援</td>
+                    <td>內建支援</td>
+                </tr>
+            </table>
+
+            <div class="success-box">
+                建議初學者從 Render 開始，它最適合我們的 Flask 應用！
+            </div>
+        </div>
+
+        <!-- 投影片 8：步驟 1 - 準備 requirements.txt -->
+        <div class="slide" id="slide8">
+            <h2>步驟 1：建立 requirements.txt</h2>
+
+            <p>雲端平台需要知道你的應用需要哪些套件。</p>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>在 CMD 中執行（在虛擬環境內）：</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>pip freeze > requirements.txt</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>檢查產生的檔案內容：</p>
+            </div>
+
+            <div class="code-block">
+<code>flask==3.0.0
+openai==1.12.0
+python-dotenv==1.0.0
+requests==2.31.0
+...</code>
+            </div>
+
+            <div class="success-box">
+                這個檔案列出所有套件和版本，雲端平台會自動安裝它們！
+            </div>
+        </div>
+
+        <!-- 投影片 9：步驟 2 - 確認 .gitignore -->
+        <div class="slide" id="slide9">
+            <h2>步驟 2：確認 .gitignore</h2>
+
+            <p>.gitignore 檔案告訴 Git 哪些檔案<strong>不要</strong>上傳。</p>
+
+            <div class="code-block">
+<code><span class="comment"># .gitignore 內容</span>
+.env
+venv/
+__pycache__/
+*.pyc</code>
+            </div>
+
+            <div class="warning-box">
+                <strong>絕對不要</strong>把 .env 上傳到 GitHub！裡面有你的 API Key！
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>.env</h4>
+                    <p>包含 API Key 等敏感資訊</p>
+                </div>
+                <div class="info-card">
+                    <h4>venv/</h4>
+                    <p>虛擬環境，太大且不需要</p>
+                </div>
+                <div class="info-card">
+                    <h4>__pycache__/</h4>
+                    <p>Python 快取檔案</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投影片 10：步驟 3 - 上傳到 GitHub -->
+        <div class="slide" id="slide10">
+            <h2>步驟 3：上傳到 GitHub</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>初始化 Git（如果還沒有）</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>git init</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>加入所有檔案</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>git add .</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">3</span>建立 commit</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>git commit -m "Initial commit"</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">4</span>推送到 GitHub</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>git push -u origin main</code>
+            </div>
+        </div>
+
+        <!-- 投影片 11：步驟 4 - 設定環境變數 -->
+        <div class="slide" id="slide11">
+            <h2>步驟 4：在雲端設定環境變數</h2>
+
+            <p>由於 .env 不會上傳，需要在雲端平台單獨設定。</p>
+
+            <div class="step-box">
+                <h3>在 Render 設定</h3>
+                <ul>
+                    <li>進入專案 Dashboard</li>
+                    <li>點擊「Environment」分頁</li>
+                    <li>點擊「Add Environment Variable」</li>
+                    <li>Key: <code>OPENAI_API_KEY</code></li>
+                    <li>Value: <code>sk-proj-你的API金鑰</code></li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                所有雲端平台都有類似的環境變數設定功能！
+            </div>
+        </div>
+
+        <!-- 投影片 12：Render 部署流程 -->
+        <div class="slide" id="slide12">
+            <h2>Render 部署流程預覽</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>註冊 Render 帳號（可用 GitHub 登入）</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>點擊「New +」→「Web Service」</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">3</span>連接你的 GitHub Repository</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">4</span>設定 Build Command: <code>pip install -r requirements.txt</code></p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">5</span>設定 Start Command: <code>python app.py</code></p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">6</span>設定環境變數 OPENAI_API_KEY</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">7</span>點擊「Create Web Service」</p>
+            </div>
+        </div>
+
+        <!-- 投影片 13：專案結構總覽 -->
+        <div class="slide" id="slide13">
+            <h2>部署前的專案結構</h2>
+
+            <div class="code-block">
+<code>你的專案資料夾/
+├── venv/                  <span class="comment"># 虛擬環境（不上傳）</span>
+├── templates/             <span class="comment"># HTML 範本</span>
+│   └── index.html
+├── app.py                 <span class="comment"># Flask 主程式</span>
+├── requirements.txt       <span class="comment"># 套件清單 ✓</span>
+├── .env                   <span class="comment"># 環境變數（不上傳）</span>
+├── .env.example           <span class="comment"># 範例檔案 ✓</span>
+└── .gitignore             <span class="comment"># Git 忽略清單 ✓</span></code>
+            </div>
+
+            <div class="success-box">
+                打勾的檔案會上傳到 GitHub，其他的不會！
+            </div>
+        </div>
+
+        <!-- 投影片 14：常見問題 -->
+        <div class="slide" id="slide14">
+            <h2>部署常見問題</h2>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Build 失敗</h4>
+                    <p>檢查 requirements.txt 是否正確<br>
+                    確認套件名稱沒有打錯</p>
+                </div>
+                <div class="info-card">
+                    <h4>應用無法啟動</h4>
+                    <p>檢查 Start Command<br>
+                    確認 app.py 的路徑正確</p>
+                </div>
+                <div class="info-card">
+                    <h4>API 錯誤</h4>
+                    <p>確認環境變數已設定<br>
+                    API Key 格式正確</p>
+                </div>
+                <div class="info-card">
+                    <h4>頁面空白</h4>
+                    <p>檢查 templates 資料夾<br>
+                    確認 index.html 存在</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                部署遇到問題時，查看平台的 Logs（日誌）可以找到錯誤原因！
+            </div>
+        </div>
+
+        <!-- 投影片 15：完成與總結 -->
+        <div class="slide" id="slide15">
+            <h2>恭喜完成所有課程！</h2>
+
+            <div class="step-box">
+                <h3>你學到了</h3>
+                <ul>
+                    <li>Python 虛擬環境與套件管理</li>
+                    <li>Flask 網頁應用開發</li>
+                    <li>OpenAI API 串接</li>
+                    <li>Postman 與 Python 測試 API</li>
+                    <li>HTML/CSS/JavaScript 前端介面</li>
+                    <li>前後端串接</li>
+                    <li>雲端部署概念</li>
+                </ul>
+            </div>
+
+            <div class="success-box">
+                你已經具備從零開始建立 AI 對話應用的完整能力！
+            </div>
+
+            <p style="text-align: center; margin-top: 30px; font-size: 1.3rem; color: #00ff88;">
+                🎉 課程完成！期待你的下一個作品！
+            </p>
+        </div>
+    </div>
+
+    <!-- 底部導航 -->
+    <div class="nav-bottom">
+        <button class="nav-btn" onclick="prevSlide()">◀ 上一頁</button>
+        <span class="slide-counter">
+            <span id="currentSlide">1</span> / <span id="totalSlides">15</span>
+        </span>
+        <button class="nav-btn" onclick="nextSlide()">下一頁 ▶</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+
+            document.getElementById('currentSlide').textContent = currentSlide;
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            showSlide(currentSlide);
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 鍵盤控制
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'f' || e.key === 'F') {
+                toggleFullscreen();
+            }
+        });
+
+        // 初始化
+        document.getElementById('totalSlides').textContent = totalSlides;
+    </script>
+</body>
+</html>

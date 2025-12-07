@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 對話助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft JhengHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f7f7f7;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .message.user { justify-content: flex-end; }
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .message.ai .message-content {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .input-area {
+            display: flex;
+            padding: 20px;
+            gap: 10px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+        }
+        #messageInput {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        #messageInput:focus { border-color: #667eea; }
+        #sendBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #sendBtn:hover { transform: scale(1.05); }
+        #sendBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .typing { color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI 對話助手</h1>
+            <p>由 OpenAI GPT 驅動的智慧對話</p>
+        </div>
+        <div class="chat-box" id="chatBox">
+            <div class="message ai">
+                <div class="message-content">你好！我是 AI 助手，有什麼可以幫助你的嗎？</div>
+            </div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="輸入訊息..." onkeypress="handleKeyPress(event)">
+            <button id="sendBtn" onclick="sendMessage()">發送</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const chatBox = document.getElementById('chatBox');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // 顯示使用者訊息
+            chatBox.innerHTML += `
+                <div class="message user">
+                    <div class="message-content">${message}</div>
+                </div>
+            `;
+            input.value = '';
+            sendBtn.disabled = true;
+
+            // 顯示打字指示
+            const typingId = 'typing-' + Date.now();
+            chatBox.innerHTML += `
+                <div class="message ai" id="${typingId}">
+                    <div class="message-content typing">AI 正在思考...</div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                document.getElementById(typingId).remove();
+
+                if (data.success) {
+                    chatBox.innerHTML += `
+                        <div class="message ai">
+                            <div class="message-content">${data.message}</div>
+                        </div>
+                    `;
+                } else {
+                    chatBox.innerHTML += `
+                        <div class="message ai">
+                            <div class="message-content" style="color: red;">錯誤: ${data.error}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById(typingId).remove();
+                chatBox.innerHTML += `
+                    <div class="message ai">
+                        <div class="message-content" style="color: red;">連線錯誤，請稍後再試</div>
+                    </div>
+                `;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+            sendBtn.disabled = false;
+            input.focus();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 2 - Flask 基礎實作</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+        a { text-decoration: none; }
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+        }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; }
+        .nav-buttons { display: flex; gap: 12px; }
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.4); }
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover { background: rgba(255,255,255,0.5); transform: translateY(-50%) scale(1.1); }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+        .slide-container { width: 100%; height: 100vh; padding-top: 60px; }
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .slide.active { display: flex; opacity: 1; }
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        h1 { color: #11998e; font-size: 52px; margin-bottom: 20px; text-align: center; }
+        h2 { color: #11998e; font-size: 36px; margin-bottom: 30px; border-bottom: 3px solid #11998e; padding-bottom: 12px; }
+        h3 { color: #11998e; font-size: 24px; margin: 25px 0 15px 0; }
+        p, li { font-size: 20px; line-height: 1.8; color: #444; margin-bottom: 12px; }
+        ul, ol { margin-left: 30px; }
+        code { background: #e8f5e9; padding: 3px 8px; border-radius: 6px; font-family: 'Consolas', monospace; color: #2e7d32; font-weight: 600; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 12px; overflow-x: auto; margin: 20px 0; font-size: 16px; line-height: 1.5; font-family: 'Consolas', monospace; }
+        .python .keyword { color: #569cd6; }
+        .python .string { color: #ce9178; }
+        .python .comment { color: #6a9955; }
+        .python .function { color: #dcdcaa; }
+        .python .decorator { color: #d7ba7d; }
+        .cmd { background: #0c0c0c; color: #cccccc; }
+        .box { padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 6px solid; font-size: 18px; }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .screenshot { max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin: 20px 0; }
+        .code-explain { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 14px; }
+        .explain-block { background: #f5f5f5; padding: 15px; border-radius: 10px; }
+        .highlight { background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .indicators { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 4000; padding: 10px 20px; background: rgba(0,0,0,0.3); border-radius: 30px; }
+        .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; }
+        .dot.active { background: #38ef7d; transform: scale(1.3); }
+        .cover-card { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; }
+        .tag-container { margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="nav-title">Part 2 - Flask 基礎實作</div>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">📚 課程總覽</a>
+            <button class="nav-btn" onclick="goToSlide(0)">🏠 首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="https://www.facebook.com/iddmail" target="_blank" class="nav-btn">📘 FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+        </div>
+    </div>
+
+    <div class="slide-container">
+        <!-- Slide 0: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div style="color: #38ef7d; letter-spacing: 2px; margin-bottom: 10px;">地端與雲端串接概念</div>
+                <h1>Part 2：Flask 基礎實作</h1>
+                <p style="font-size: 24px; color: #666; max-width: 800px; margin-top: 20px;">
+                    建立第一個 Flask 網頁應用<br>
+                    理解路由與視圖函數的運作
+                </p>
+                <div class="tag-container">
+                    <span class="highlight">Flask</span>
+                    <span class="highlight">@app.route</span>
+                    <span class="highlight">localhost:5000</span>
+                </div>
+                <div style="margin-top: 40px; color: #888;">
+                    📂 對應 GitHub：<code>2.3_Flask快速入門/</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 1: Flask 是什麼 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🤔 Flask 是什麼？</h2>
+                <p>Flask 是一個輕量級的 Python <strong>網頁框架</strong>，用來建立網站和 API。</p>
+
+                <h3>🍽️ 餐廳比喻</h3>
+                <div class="code-explain">
+                    <div class="explain-block">
+                        <h3>餐廳運作</h3>
+                        <ul>
+                            <li>客人進門點餐 → <strong>請求 (Request)</strong></li>
+                            <li>廚房準備餐點 → <strong>處理邏輯</strong></li>
+                            <li>服務生送餐 → <strong>回應 (Response)</strong></li>
+                        </ul>
+                    </div>
+                    <div class="explain-block">
+                        <h3>Flask 運作</h3>
+                        <ul>
+                            <li>使用者訪問網址 → <strong>請求 (Request)</strong></li>
+                            <li>Python 程式處理 → <strong>處理邏輯</strong></li>
+                            <li>回傳網頁內容 → <strong>回應 (Response)</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>💡 重點：</strong>Flask 就是那個協調餐廳運作的管理系統！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 實作 1 - 建立 app.py -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 1】建立 app.py 檔案</h2>
+                <p>在 <code>ch2_local_ai_app</code> 資料夾中建立主程式檔案。</p>
+
+                <h3>📝 操作步驟</h3>
+                <ol>
+                    <li>開啟你喜歡的文字編輯器（VS Code、記事本等）</li>
+                    <li>建立新檔案</li>
+                    <li>存檔為 <code>app.py</code></li>
+                </ol>
+
+                <div class="box warning">
+                    <strong>⚠️ 注意：</strong>檔名必須是 <code>app.py</code>，這是 Flask 的慣例！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 實作 2 - 撰寫程式碼 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 2】撰寫 Flask 程式</h2>
+                <p>將以下程式碼複製貼上到 <code>app.py</code>：</p>
+
+                <pre><span style="color:#6a9955"># 引入 Flask 框架</span>
+<span style="color:#569cd6">from</span> flask <span style="color:#569cd6">import</span> Flask
+
+<span style="color:#6a9955"># 建立 Flask 應用程式</span>
+app = Flask(__name__)
+
+<span style="color:#6a9955"># 定義首頁路由</span>
+<span style="color:#d7ba7d">@app.route('/')</span>
+<span style="color:#569cd6">def</span> <span style="color:#dcdcaa">home</span>():
+    <span style="color:#569cd6">return</span> <span style="color:#ce9178">'&lt;h1&gt;歡迎來到 Flask 世界！&lt;/h1&gt;'</span>
+
+<span style="color:#6a9955"># 啟動應用程式</span>
+<span style="color:#569cd6">if</span> __name__ == <span style="color:#ce9178">'__main__'</span>:
+    app.run(debug=<span style="color:#569cd6">True</span>)</pre>
+
+                <div class="box success">
+                    這就是一個完整的 Flask 應用！只有 12 行程式碼！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 程式碼解說 1 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 3】理解程式碼（上）</h2>
+
+                <div class="code-explain">
+                    <div class="code-block">
+                        <span style="color:#569cd6">from</span> flask <span style="color:#569cd6">import</span> Flask
+                    </div>
+                    <div class="explain-block">
+                        <strong>第 1 行</strong><br>
+                        從 flask 套件中引入 Flask 類別
+                    </div>
+                </div>
+
+                <div class="code-explain">
+                    <div class="code-block">
+                        app = Flask(__name__)
+                    </div>
+                    <div class="explain-block">
+                        <strong>第 4 行</strong><br>
+                        建立一個 Flask 應用程式物件，取名為 <code>app</code>
+                    </div>
+                </div>
+
+                <div class="code-explain">
+                    <div class="code-block">
+                        <span style="color:#d7ba7d">@app.route('/')</span>
+                    </div>
+                    <div class="explain-block">
+                        <strong>第 7 行（裝飾器）</strong><br>
+                        定義「路由」：當使用者訪問 <code>/</code>（首頁）時，執行下面的函數
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 程式碼解說 2 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 3】理解程式碼（下）</h2>
+
+                <div class="code-explain">
+                    <div class="code-block">
+                        <span style="color:#569cd6">def</span> <span style="color:#dcdcaa">home</span>():<br>
+                        &nbsp;&nbsp;<span style="color:#569cd6">return</span> <span style="color:#ce9178">'&lt;h1&gt;歡迎...&lt;/h1&gt;'</span>
+                    </div>
+                    <div class="explain-block">
+                        <strong>第 8-9 行（視圖函數）</strong><br>
+                        定義 <code>home()</code> 函數，回傳 HTML 內容給使用者
+                    </div>
+                </div>
+
+                <div class="code-explain">
+                    <div class="code-block">
+                        <span style="color:#569cd6">if</span> __name__ == <span style="color:#ce9178">'__main__'</span>:<br>
+                        &nbsp;&nbsp;app.run(debug=<span style="color:#569cd6">True</span>)
+                    </div>
+                    <div class="explain-block">
+                        <strong>第 11-12 行（啟動）</strong><br>
+                        啟動 Flask 伺服器，<code>debug=True</code> 表示開發模式
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>💡 開發模式好處：</strong>程式碼修改後會自動重新載入，不用手動重啟！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 實作 4 - 執行 Flask -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 4】執行 Flask 應用</h2>
+                <p>存檔後，回到 CMD（確認有 <code>(venv)</code>），執行程式：</p>
+
+                <pre class="cmd"><span style="color:#6a9955">(venv)</span> C:\...\ch2_local_ai_app> <span style="color:#dcdcaa">python app.py</span></pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd"> * Serving Flask app 'app'
+ * Debug mode: on
+ * Running on <span style="color:#4fc3f7">http://127.0.0.1:5000</span>
+Press CTRL+C to quit</pre>
+
+                <div class="box success">
+                    <strong>🎉 成功！</strong>看到 <code>Running on http://127.0.0.1:5000</code> 表示伺服器已啟動！
+                </div>
+
+                <div class="box warning">
+                    <strong>⚠️ 重要：</strong>這個 CMD 視窗不要關閉！伺服器需要持續運行。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Flask 運行截圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 4】預期畫面</h2>
+                <img src="../截圖/ch2_flask_running.png" alt="Flask 運行中" class="screenshot">
+                <div class="box info">
+                    你的 CMD 視窗應該顯示類似上圖的訊息。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 實作 5 - 瀏覽器測試 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 5】在瀏覽器中測試</h2>
+                <p>Flask 伺服器運行後，開啟瀏覽器測試！</p>
+
+                <h3>📝 操作步驟</h3>
+                <ol>
+                    <li>開啟瀏覽器（Chrome、Edge、Firefox 都可以）</li>
+                    <li>在網址列輸入：</li>
+                </ol>
+
+                <pre style="background: #fff; color: #333; border: 2px solid #11998e; text-align: center; font-size: 24px;">
+http://localhost:5000/
+</pre>
+
+                <h3>✅ 預期結果</h3>
+                <p>瀏覽器會顯示：</p>
+                <div style="background: white; padding: 30px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
+                    <h1 style="color: #333; font-size: 36px;">歡迎來到 Flask 世界！</h1>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 首頁截圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 5】預期畫面</h2>
+                <img src="../截圖/ch2_flask_home.png" alt="Flask 首頁" class="screenshot">
+                <div class="box success">
+                    <strong>🎉 恭喜！</strong>你成功建立了第一個 Flask 網頁！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: 新增路由 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🔧 進階練習：新增 /hello 路由</h2>
+                <p>試著在 <code>app.py</code> 中新增另一個路由：</p>
+
+                <pre><span style="color:#d7ba7d">@app.route('/hello')</span>
+<span style="color:#569cd6">def</span> <span style="color:#dcdcaa">hello</span>():
+    <span style="color:#569cd6">return</span> <span style="color:#ce9178">'&lt;h1&gt;Hello, World!&lt;/h1&gt;'</span></pre>
+
+                <p>儲存後，在瀏覽器訪問：</p>
+                <pre style="background: #fff; color: #333; border: 2px solid #11998e; text-align: center; font-size: 24px;">
+http://localhost:5000/hello
+</pre>
+
+                <div class="box info">
+                    <strong>💡 發現：</strong>不同的網址路徑可以顯示不同的內容！這就是「路由」的概念。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: 實作 6 - 停止 Flask -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 6】停止 Flask 應用</h2>
+                <p>測試完成後，可以停止伺服器。</p>
+
+                <h3>📝 操作步驟</h3>
+                <p>在運行 Flask 的 CMD 視窗中，按下：</p>
+
+                <pre style="background: #fff; color: #333; border: 2px solid #e53935; text-align: center; font-size: 28px; padding: 20px;">
+Ctrl + C
+</pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd">^C</pre>
+                <p>伺服器會停止，你可以再次輸入指令。</p>
+
+                <div class="box warning">
+                    <strong>⚠️ 提醒：</strong>停止伺服器後，瀏覽器就無法訪問 localhost:5000 了！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: 完成確認 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>✅ Part 2 完成確認</h2>
+
+                <h3>你學會了：</h3>
+                <ul>
+                    <li>☐ Flask 的基本概念（請求-回應模式）</li>
+                    <li>☐ 建立 <code>app.py</code> 主程式</li>
+                    <li>☐ 使用 <code>@app.route('/')</code> 定義路由</li>
+                    <li>☐ 執行 <code>python app.py</code> 啟動伺服器</li>
+                    <li>☐ 在瀏覽器訪問 <code>localhost:5000</code></li>
+                    <li>☐ 使用 <code>Ctrl+C</code> 停止伺服器</li>
+                </ul>
+
+                <h3>目前專案結構：</h3>
+                <pre>ch2_local_ai_app/
+├── venv/
+├── app.py             ← 新增的 Flask 主程式
+├── .env
+└── .gitignore</pre>
+
+                <div class="box success" style="margin-top: 30px;">
+                    <strong>🎉 太棒了！</strong>可以進入 Part 3：建立 AI 對話 API！
+                
+                <div style="margin-top: 40px; display: flex; justify-content: center; gap: 20px;">
+                    <a href="Part1_環境準備.html" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600;">⬅️ 上一單元</a>
+                    <a href="index.html" style="background: #28a745; color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600;">📚 回到總覽</a>
+                    <a href="Part3_AI_API串接.html" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600;">下一單元 ➡️</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            }
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === totalSlides - 1;
+        }
+
+        function changeSlide(direction) { showSlide(currentSlide + direction); }
+        function goToSlide(index) { showSlide(index); }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

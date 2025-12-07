@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 4 - Postman 測試 API</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+        a { text-decoration: none; }
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+        }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; }
+        .nav-buttons { display: flex; gap: 12px; }
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.4); }
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover { background: rgba(255,255,255,0.5); transform: translateY(-50%) scale(1.1); }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+        .slide-container { width: 100%; height: 100vh; padding-top: 60px; }
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .slide.active { display: flex; opacity: 1; }
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        h1 { color: #f5576c; font-size: 52px; margin-bottom: 20px; text-align: center; }
+        h2 { color: #f5576c; font-size: 36px; margin-bottom: 30px; border-bottom: 3px solid #f5576c; padding-bottom: 12px; }
+        h3 { color: #c62828; font-size: 24px; margin: 25px 0 15px 0; }
+        p, li { font-size: 20px; line-height: 1.8; color: #444; margin-bottom: 12px; }
+        ol, ul { margin-left: 30px; }
+        code { background: #fce4ec; padding: 3px 8px; border-radius: 6px; font-family: 'Consolas', monospace; color: #c62828; font-weight: 600; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 12px; overflow-x: auto; margin: 20px 0; font-size: 16px; line-height: 1.5; font-family: 'Consolas', monospace; }
+        .box { padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 6px solid; font-size: 18px; }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .screenshot { max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin: 20px 0; }
+        .step-number { display: inline-block; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; width: 40px; height: 40px; border-radius: 50%; text-align: center; line-height: 40px; font-weight: bold; margin-right: 15px; }
+        .highlight { background: linear-gradient(120deg, #f093fb 0%, #f5576c 100%); padding: 2px 8px; border-radius: 4px; font-weight: bold; color: white; }
+        .indicators { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 4000; padding: 10px 20px; background: rgba(0,0,0,0.3); border-radius: 30px; }
+        .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; }
+        .dot.active { background: #f5576c; transform: scale(1.3); }
+        .cover-card { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; }
+        .tag-container { margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        .json-block { background: #263238; color: #89ddff; padding: 20px; border-radius: 12px; font-family: 'Consolas', monospace; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="nav-title">Part 4 - Postman 測試 API</div>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">📚 課程總覽</a>
+            <button class="nav-btn" onclick="goToSlide(0)">🏠 首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="https://www.facebook.com/iddmail" target="_blank" class="nav-btn">📘 FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+        </div>
+    </div>
+
+    <div class="slide-container">
+        <!-- Slide 0: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div style="color: #f5576c; letter-spacing: 2px; margin-bottom: 10px;">地端與雲端串接概念</div>
+                <h1>Part 4：Postman 測試 API</h1>
+                <p style="font-size: 24px; color: #666; max-width: 800px; margin-top: 20px;">
+                    使用 Postman 圖形介面工具<br>
+                    測試 /chat API 端點
+                </p>
+                <div class="tag-container">
+                    <span class="highlight">Postman</span>
+                    <span class="highlight">POST Request</span>
+                    <span class="highlight">JSON Body</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 1: 什麼是 Postman -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🤔 什麼是 Postman？</h2>
+                <p>Postman 是一個 <strong>API 測試工具</strong>，提供友善的圖形介面，讓你可以：</p>
+                <ul>
+                    <li>發送各種 HTTP 請求（GET、POST、PUT、DELETE）</li>
+                    <li>設定請求的 Headers 和 Body</li>
+                    <li>查看伺服器的回應結果</li>
+                    <li>儲存和管理常用的 API 請求</li>
+                </ul>
+                <div class="box info">
+                    <strong>💡 為什麼用 Postman？</strong><br>
+                    比起用程式碼測試，Postman 更直覺，適合快速驗證 API 是否正常運作！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 實作 1 - 下載 Postman -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 1】下載並開啟 Postman</h2>
+
+                <h3><span class="step-number">1</span>下載 Postman</h3>
+                <p>前往官方網站下載：</p>
+                <pre style="background: #fff; color: #333; border: 2px solid #f5576c; text-align: center; font-size: 20px;">
+https://www.postman.com/downloads/
+</pre>
+
+                <h3><span class="step-number">2</span>安裝並開啟</h3>
+                <p>安裝完成後開啟 Postman。</p>
+
+                <div class="box info">
+                    <strong>💡 提示：</strong>如果要求登入，可以點「Skip and go to the app」跳過！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 實作 2 - 建立 POST 請求 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 2】建立 POST 請求</h2>
+
+                <h3><span class="step-number">1</span>點擊左上角「New」</h3>
+
+                <h3><span class="step-number">2</span>選擇「HTTP Request」</h3>
+
+                <h3><span class="step-number">3</span>將「GET」改為「POST」</h3>
+                <p>點擊下拉選單，選擇 <strong>POST</strong></p>
+
+                <h3><span class="step-number">4</span>輸入 URL</h3>
+                <pre style="background: #fff; color: #333; border: 2px solid #f5576c; text-align: center; font-size: 24px;">
+http://localhost:5000/chat
+</pre>
+
+                <div class="box warning">
+                    <strong>⚠️ 確認：</strong>Flask 伺服器必須在運行中！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 實作 3 - 設定 Body -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 3】設定 Body（最重要！）</h2>
+
+                <h3><span class="step-number">1</span>點擊「Body」分頁</h3>
+
+                <h3><span class="step-number">2</span>選擇「raw」</h3>
+
+                <h3><span class="step-number">3</span>右側下拉選單改為「JSON」</h3>
+
+                <h3><span class="step-number">4</span>輸入以下 JSON：</h3>
+                <div class="json-block">
+{
+    <span style="color:#c3e88d">"message"</span>: <span style="color:#c3e88d">"你好，請介紹一下你自己"</span>
+}</div>
+
+                <div class="box success">
+                    🟢 這是一段正確的 JSON 格式
+                </div>
+
+                <div class="box error">
+                    <strong>🟥 常見錯誤：</strong><br>
+                    ❌ 只輸入 <code>"message": "你好..."</code>（缺少大括號）<br>
+                    ❌ 使用中文引號 <code>「」</code>（必須用英文引號 <code>""</code>）
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 實作 4 - 發送請求 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 4】發送請求</h2>
+
+                <h3><span class="step-number">1</span>點擊「Send」按鈕</h3>
+                <p>在右側找到藍色的 <strong>Send</strong> 按鈕，點擊它。</p>
+
+                <h3><span class="step-number">2</span>等待回應</h3>
+                <p>等待幾秒鐘（AI 需要時間思考）...</p>
+
+                <h3>✅ 預期結果</h3>
+                <p>下方會顯示：</p>
+                <pre style="background: #263238; color: #c3e88d;">Status: <span style="color:#4fc3f7">200 OK</span></pre>
+                <div class="json-block">
+{
+    <span style="color:#c3e88d">"success"</span>: <span style="color:#f78c6c">true</span>,
+    <span style="color:#c3e88d">"message"</span>: <span style="color:#c3e88d">"你好！我是 AI 助手..."</span>
+}</div>
+
+                <div class="box success">
+                    <strong>🎉 成功！</strong>API 完全正常運作！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 截圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 4】預期畫面</h2>
+                <img src="../截圖/ch2_postman_test.png" alt="Postman 測試結果" class="screenshot">
+                <div class="box info">
+                    你的 Postman 畫面應該類似上圖，顯示 200 OK 和 AI 回應。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 常見錯誤 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>❌ 常見錯誤排解</h2>
+
+                <h3>❌ Could not send request</h3>
+                <p>👉 Flask 伺服器沒有在運行，請確認 CMD 視窗有顯示 <code>Running on...</code></p>
+
+                <h3>❌ Connection refused</h3>
+                <p>👉 網址錯誤，確認是 <code>http://</code> 不是 <code>https://</code></p>
+
+                <h3>❌ 400 Bad Request</h3>
+                <p>👉 JSON 格式錯誤，確認有 <code>{ }</code> 包起來</p>
+
+                <h3>❌ 500 Internal Server Error</h3>
+                <p>👉 <code>.env</code> 檔案中的 API Key 可能錯誤</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: 完成確認 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>✅ Part 4 完成確認</h2>
+
+                <h3>你學會了：</h3>
+                <ul>
+                    <li>☐ 下載並開啟 Postman</li>
+                    <li>☐ 建立 POST 請求</li>
+                    <li>☐ 設定 JSON Body</li>
+                    <li>☐ 發送請求並查看回應</li>
+                    <li>☐ 排解常見錯誤</li>
+                </ul>
+
+                <div class="box success" style="margin-top: 30px;">
+                    <strong>🎉 太棒了！</strong>API 測試成功！進入 Part 5：Python 腳本測試！
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            }
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === totalSlides - 1;
+        }
+
+        function changeSlide(direction) { showSlide(currentSlide + direction); }
+        function goToSlide(index) { showSlide(index); }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

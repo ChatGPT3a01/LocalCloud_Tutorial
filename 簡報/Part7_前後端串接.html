@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 7：前後端串接</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        /* 導航列 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 1000;
+        }
+
+        .nav-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-links .fb-link {
+            color: #1877f2;
+        }
+
+        .nav-links .yt-link {
+            color: #ff0000;
+        }
+
+        .home-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .fullscreen-btn {
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 投影片容器 */
+        .slide-container {
+            padding-top: 80px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .slide {
+            display: none;
+            width: 90%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 首頁樣式 */
+        .title-slide {
+            text-align: center;
+            padding: 80px 40px;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #00d4ff, #00ff88, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8rem;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+
+        .title-slide .author {
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        /* 內頁標題 */
+        .slide h2 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 10px;
+        }
+
+        .slide h3 {
+            font-size: 1.5rem;
+            color: #00ff88;
+            margin: 20px 0 15px 0;
+        }
+
+        /* 內容樣式 */
+        .slide p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .slide ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .slide ul li {
+            font-size: 1.2rem;
+            line-height: 2;
+            padding-left: 30px;
+            position: relative;
+            color: #e0e0e0;
+        }
+
+        .slide ul li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #00ff88;
+        }
+
+        /* 程式碼區塊 */
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+
+        .code-block code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            color: #e6edf3;
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        .code-block .keyword {
+            color: #ff7b72;
+        }
+
+        .code-block .string {
+            color: #a5d6ff;
+        }
+
+        .code-block .function {
+            color: #d2a8ff;
+        }
+
+        .code-block .decorator {
+            color: #ffa657;
+        }
+
+        /* 命令區塊 */
+        .cmd-block {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #00ff88;
+        }
+
+        .cmd-block code {
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #00ff88;
+        }
+
+        /* 圖片樣式 */
+        .slide img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .img-caption {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: -10px;
+        }
+
+        /* 步驟說明 */
+        .step-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-right: 15px;
+        }
+
+        /* 警告提示 */
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .warning-box::before {
+            content: '⚠️ ';
+        }
+
+        /* 成功提示 */
+        .success-box {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .success-box::before {
+            content: '✅ ';
+        }
+
+        /* 錯誤提示 */
+        .error-box {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 4px solid #ff6b6b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .error-box::before {
+            content: '❌ ';
+        }
+
+        /* 資訊提示 */
+        .info-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .info-box::before {
+            content: '💡 ';
+        }
+
+        /* 底部導航 */
+        .nav-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .slide-counter {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        /* 分隔框 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card h4 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        /* 開發者工具模擬 */
+        .devtools {
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .devtools-header {
+            background: #3c3c3c;
+            padding: 10px 15px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .devtools-tab {
+            color: #aaa;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .devtools-tab.active {
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+        }
+
+        .devtools-content {
+            padding: 15px;
+            color: #ccc;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* 流程圖 */
+        .flow-chart {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        .flow-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航列 -->
+    <nav class="navbar">
+        <div class="nav-title">Part 7：前後端串接</div>
+        <div class="nav-links">
+            <button class="home-btn" onclick="goToSlide(1)">🏠 首頁</button>
+            <a href="https://www.facebook.com/iddmail" target="_blank" class="fb-link">Facebook</a>
+            <a href="https://www.youtube.com/@TeachAI" target="_blank" class="yt-link">YouTube</a>
+            <button class="fullscreen-btn" onclick="toggleFullscreen()">全螢幕</button>
+        </div>
+    </nav>
+
+    <div class="slide-container">
+        <!-- 投影片 1：首頁 -->
+        <div class="slide title-slide active" id="slide1">
+            <h1>Part 7：前後端串接</h1>
+            <p class="subtitle">修改 Flask 提供網頁介面</p>
+            <p class="author">實作步驟教學</p>
+            <div style="margin-top: 50px;">
+                <p style="color: #888;">使用鍵盤 ← → 或點擊下方按鈕切換投影片</p>
+            </div>
+        </div>
+
+        <!-- 投影片 2：前後端溝通流程 -->
+        <div class="slide" id="slide2">
+            <h2>前後端溝通流程</h2>
+
+            <div class="flow-chart">
+                <div class="flow-item">使用者<br>輸入訊息</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item">JavaScript<br>發送 fetch</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item">Flask<br>/chat API</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-item">OpenAI<br>API</div>
+            </div>
+
+            <div class="flow-chart">
+                <div class="flow-item">顯示<br>AI 回應</div>
+                <div class="flow-arrow">←</div>
+                <div class="flow-item">JavaScript<br>接收資料</div>
+                <div class="flow-arrow">←</div>
+                <div class="flow-item">Flask<br>回傳 JSON</div>
+                <div class="flow-arrow">←</div>
+                <div class="flow-item">OpenAI<br>回應</div>
+            </div>
+
+            <div class="info-box">
+                前端透過 fetch API 呼叫後端的 /chat 端點，後端再呼叫 OpenAI API！
+            </div>
+        </div>
+
+        <!-- 投影片 3：步驟 1 - 了解 render_template -->
+        <div class="slide" id="slide3">
+            <h2>步驟 1：了解 render_template</h2>
+
+            <p>Flask 提供 <code style="color: #00ff88;">render_template</code> 函數來提供 HTML 頁面：</p>
+
+            <div class="code-block">
+<code><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, render_template
+
+<span class="decorator">@app.route</span>(<span class="string">'/'</span>)
+<span class="keyword">def</span> <span class="function">home</span>():
+    <span class="comment"># 自動在 templates 資料夾尋找 index.html</span>
+    <span class="keyword">return</span> <span class="function">render_template</span>(<span class="string">'index.html'</span>)</code>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>之前的寫法</h4>
+                    <p>return "Hello World"<br>
+                    只能回傳純文字</p>
+                </div>
+                <div class="info-card">
+                    <h4>現在的寫法</h4>
+                    <p>return render_template('index.html')<br>
+                    可以回傳完整網頁</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投影片 4：步驟 2 - 修改 app.py -->
+        <div class="slide" id="slide4">
+            <h2>步驟 2：修改 app.py 的 import</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>找到 app.py 檔案的第一行</p>
+            </div>
+
+            <div class="code-block">
+<code><span class="comment"># 原本的寫法</span>
+<span class="keyword">from</span> flask <span class="keyword">import</span> Flask, request, jsonify</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>加入 render_template</p>
+            </div>
+
+            <div class="code-block">
+<code><span class="comment"># 修改後的寫法</span>
+<span class="keyword">from</span> flask <span class="keyword">import</span> Flask, request, jsonify, render_template</code>
+            </div>
+
+            <div class="warning-box">
+                一定要加入 render_template，否則會出現 NameError！
+            </div>
+        </div>
+
+        <!-- 投影片 5：步驟 3 - 修改首頁路由 -->
+        <div class="slide" id="slide5">
+            <h2>步驟 3：修改首頁路由</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>找到 home() 函數</p>
+            </div>
+
+            <div class="code-block">
+<code><span class="comment"># 原本的寫法</span>
+<span class="decorator">@app.route</span>(<span class="string">'/'</span>)
+<span class="keyword">def</span> <span class="function">home</span>():
+    <span class="keyword">return</span> <span class="string">"歡迎使用 AI 對話 API！"</span></code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>改成使用 render_template</p>
+            </div>
+
+            <div class="code-block">
+<code><span class="comment"># 修改後的寫法</span>
+<span class="decorator">@app.route</span>(<span class="string">'/'</span>)
+<span class="keyword">def</span> <span class="function">home</span>():
+    <span class="comment"># 會自動在 templates 資料夾尋找 index.html</span>
+    <span class="keyword">return</span> <span class="function">render_template</span>(<span class="string">'index.html'</span>)</code>
+            </div>
+
+            <div class="success-box">
+                現在訪問首頁會顯示我們製作的對話介面！
+            </div>
+        </div>
+
+        <!-- 投影片 6：步驟 4 - 啟動 Flask -->
+        <div class="slide" id="slide6">
+            <h2>步驟 4：啟動 Flask 伺服器</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>開啟 CMD，進入專案資料夾</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>cd D:\自己架設AI_零基礎到大師\CH2_地端與雲端串接概念\AI_Projects\2.5_美化介面\階段三_測試與除錯</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>啟動虛擬環境</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>venv\Scripts\activate</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">3</span>執行 Flask 應用</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>python app.py</code>
+            </div>
+
+            <div class="success-box">
+                看到 "Running on http://127.0.0.1:5000" 就成功了！
+            </div>
+        </div>
+
+        <!-- 投影片 7：步驟 5 - 開啟瀏覽器 -->
+        <div class="slide" id="slide7">
+            <h2>步驟 5：開啟瀏覽器測試</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>開啟瀏覽器（Chrome、Edge、Firefox）</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>在網址列輸入</p>
+            </div>
+
+            <div class="cmd-block">
+                <code>http://localhost:5000/</code>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">3</span>確認介面顯示正確</p>
+            </div>
+
+            <p>你應該看到：</p>
+            <ul>
+                <li>漸層色標題區域「AI 對話助手」</li>
+                <li>白色對話區域，已有 AI 歡迎訊息</li>
+                <li>底部輸入框和發送按鈕</li>
+            </ul>
+        </div>
+
+        <!-- 投影片 8：測試成功畫面 -->
+        <div class="slide" id="slide8">
+            <h2>步驟 5（續）：測試成功畫面</h2>
+
+            <img src="../截圖/ch2_chat_interface.png" alt="AI 對話介面">
+            <p class="img-caption">完整的 AI 對話介面</p>
+
+            <div class="success-box">
+                如果你看到這個畫面，恭喜！前後端串接成功！
+            </div>
+        </div>
+
+        <!-- 投影片 9：步驟 6 - 測試對話功能 -->
+        <div class="slide" id="slide9">
+            <h2>步驟 6：測試對話功能</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>在輸入框輸入訊息</p>
+            </div>
+
+            <p>例如：「你好，請介紹台灣的特色美食」</p>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>點擊「發送」按鈕或按 Enter</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">3</span>觀察以下變化</p>
+            </div>
+
+            <ul>
+                <li>你的訊息出現在右側（藍色背景）</li>
+                <li>按鈕變成「思考中...」並暫時停用</li>
+                <li>幾秒後，AI 回應出現在左側（白色背景）</li>
+                <li>按鈕恢復成「發送」</li>
+            </ul>
+
+            <div class="success-box">
+                對話功能正常運作！
+            </div>
+        </div>
+
+        <!-- 投影片 10：步驟 7 - 測試各種情境 -->
+        <div class="slide" id="slide10">
+            <h2>步驟 7：測試各種情境</h2>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>測試 1：連續發送</h4>
+                    <p>問多個問題，確認對話記錄正確累積，自動捲動到最新</p>
+                </div>
+                <div class="info-card">
+                    <h4>測試 2：空訊息</h4>
+                    <p>不輸入文字就按發送，應該不會有任何反應</p>
+                </div>
+                <div class="info-card">
+                    <h4>測試 3：長訊息</h4>
+                    <p>輸入很長的文字，確認訊息框會自動換行</p>
+                </div>
+                <div class="info-card">
+                    <h4>測試 4：網路錯誤</h4>
+                    <p>停止 Flask（按 Ctrl+C），應顯示「無法連接到伺服器」</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投影片 11：步驟 8 - 開發者工具介紹 -->
+        <div class="slide" id="slide11">
+            <h2>步驟 8：使用瀏覽器開發者工具</h2>
+
+            <p>開發者工具可以幫助你除錯和了解網路請求！</p>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>按下 <code style="color: #00ff88;">F12</code> 開啟開發者工具</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>點擊「Network」（網路）分頁</p>
+            </div>
+
+            <div class="devtools">
+                <div class="devtools-header">
+                    <span class="devtools-tab">Elements</span>
+                    <span class="devtools-tab">Console</span>
+                    <span class="devtools-tab active">Network</span>
+                    <span class="devtools-tab">Sources</span>
+                </div>
+                <div class="devtools-content">
+                    Name          Status    Type      Size<br>
+                    chat          200       fetch     1.2 KB
+                </div>
+            </div>
+
+            <div class="info-box">
+                Network 分頁可以看到所有網路請求，包括 API 呼叫！
+            </div>
+        </div>
+
+        <!-- 投影片 12：步驟 9 - 查看 API 請求 -->
+        <div class="slide" id="slide12">
+            <h2>步驟 9：查看 API 請求內容</h2>
+
+            <div class="step-box">
+                <p><span class="step-number">1</span>在 Network 分頁，發送一則訊息</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">2</span>點擊出現的「chat」請求</p>
+            </div>
+
+            <div class="step-box">
+                <p><span class="step-number">3</span>查看各個分頁</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>Headers</h4>
+                    <p>查看請求方法（POST）<br>
+                    Content-Type: application/json</p>
+                </div>
+                <div class="info-card">
+                    <h4>Payload</h4>
+                    <p>查看發送的資料<br>
+                    {"message": "你好..."}</p>
+                </div>
+                <div class="info-card">
+                    <h4>Response</h4>
+                    <p>查看 API 回傳的資料<br>
+                    {"success": true, "message": "..."}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投影片 13：開發者工具截圖 -->
+        <div class="slide" id="slide13">
+            <h2>步驟 9（續）：開發者工具畫面</h2>
+
+            <img src="../截圖/ch2_dev_tools.png" alt="開發者工具">
+            <p class="img-caption">瀏覽器開發者工具 - Network 分頁</p>
+
+            <div class="success-box">
+                透過開發者工具，可以清楚看到前後端之間的資料傳輸！
+            </div>
+        </div>
+
+        <!-- 投影片 14：常見錯誤處理 -->
+        <div class="slide" id="slide14">
+            <h2>常見錯誤處理</h2>
+
+            <div class="error-box">
+                <strong>瀏覽器顯示「無法連線到這個網站」</strong>
+            </div>
+            <p>解決：確認 Flask 伺服器正在運行，網址是 http 不是 https</p>
+
+            <div class="error-box">
+                <strong>顯示「404 找不到頁面」</strong>
+            </div>
+            <p>解決：確認 templates 資料夾存在，且裡面有 index.html</p>
+
+            <div class="error-box">
+                <strong>頁面顯示但發送訊息沒反應</strong>
+            </div>
+            <p>解決：檢查 .env 中的 API Key，開啟 F12 查看 Console 錯誤</p>
+
+            <div class="error-box">
+                <strong>顯示 NameError: render_template</strong>
+            </div>
+            <p>解決：確認有在 import 加入 render_template</p>
+        </div>
+
+        <!-- 投影片 15：重點回顧 -->
+        <div class="slide" id="slide15">
+            <h2>Part 7 重點回顧</h2>
+
+            <div class="step-box">
+                <h3>本單元學到的技能</h3>
+                <ul>
+                    <li>理解前後端溝通流程</li>
+                    <li>使用 render_template 提供網頁</li>
+                    <li>修改 Flask app.py</li>
+                    <li>測試完整對話功能</li>
+                    <li>使用瀏覽器開發者工具除錯</li>
+                </ul>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>關鍵程式碼</h4>
+                    <p>from flask import render_template<br>
+                    return render_template('index.html')</p>
+                </div>
+                <div class="info-card">
+                    <h4>下一步</h4>
+                    <p>Part 8 將學習如何<br>
+                    準備雲端部署</p>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin-top: 30px; font-size: 1.5rem;">
+                下一單元：Part 8 雲端部署準備
+            </p>
+        </div>
+    </div>
+
+    <!-- 底部導航 -->
+    <div class="nav-bottom">
+        <button class="nav-btn" onclick="prevSlide()">◀ 上一頁</button>
+        <span class="slide-counter">
+            <span id="currentSlide">1</span> / <span id="totalSlides">15</span>
+        </span>
+        <button class="nav-btn" onclick="nextSlide()">下一頁 ▶</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+
+            document.getElementById('currentSlide').textContent = currentSlide;
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            showSlide(currentSlide);
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 鍵盤控制
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'f' || e.key === 'F') {
+                toggleFullscreen();
+            }
+        });
+
+        // 初始化
+        document.getElementById('totalSlides').textContent = totalSlides;
+    </script>
+</body>
+</html>

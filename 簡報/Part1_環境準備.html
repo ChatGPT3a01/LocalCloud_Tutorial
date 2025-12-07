@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 1 - 環境準備</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+        a { text-decoration: none; }
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav-title { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .nav-buttons { display: flex; gap: 12px; }
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.4); transform: translateY(-2px); }
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover { background: rgba(255,255,255,0.5); transform: translateY(-50%) scale(1.1); }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+        .slide-container { width: 100%; height: 100vh; padding-top: 60px; position: relative; z-index: 1; }
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+        .slide.active { display: flex; opacity: 1; z-index: 20; }
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        h1 { color: #1e3c72; font-size: 52px; margin-bottom: 20px; text-align: center; }
+        h2 { color: #2a5298; font-size: 36px; margin-bottom: 30px; border-bottom: 3px solid #1e3c72; padding-bottom: 12px; }
+        h3 { color: #1e3c72; font-size: 24px; margin: 25px 0 15px 0; }
+        p, li { font-size: 20px; line-height: 1.8; color: #444; margin-bottom: 12px; }
+        ul, ol { margin-left: 30px; }
+        code { background: #f0f2f5; padding: 3px 8px; border-radius: 6px; font-family: 'Consolas', monospace; color: #d63384; font-weight: 600; font-size: 0.95em; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 12px; overflow-x: auto; margin: 20px 0; font-size: 16px; line-height: 1.5; font-family: 'Consolas', monospace; }
+        .cmd { background: #0c0c0c; color: #cccccc; }
+        .cmd .prompt { color: #6a9955; }
+        .cmd .command { color: #dcdcaa; }
+        .cmd .output { color: #9cdcfe; }
+        .box { padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 6px solid; font-size: 18px; }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .step-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .step-card h3 { color: white; margin-top: 0; }
+        .step-card code { background: rgba(255,255,255,0.2); color: #fff; }
+        .screenshot { max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin: 20px 0; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .highlight { background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%); padding: 2px 8px; border-radius: 4px; font-weight: bold; color: #004d40; }
+        .indicators { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 4000; padding: 10px 20px; background: rgba(0,0,0,0.3); border-radius: 30px; backdrop-filter: blur(5px); }
+        .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: #4facfe; transform: scale(1.3); }
+        .cover-card { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70vh; }
+        .cover-subtitle { color: #4facfe; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; font-size: 18px; }
+        .cover-desc { font-size: 24px; color: #666; max-width: 800px; margin-top: 20px; }
+        .tag-container { margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="nav-title">Part 1 - 環境準備</div>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">📚 課程總覽</a>
+            <button class="nav-btn" onclick="goToSlide(0)">🏠 首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="https://www.facebook.com/iddmail" target="_blank" class="nav-btn">📘 FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+        </div>
+    </div>
+
+    <div class="slide-container">
+        <!-- Slide 0: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="cover-subtitle">地端與雲端串接概念</div>
+                <h1>Part 1：環境準備</h1>
+                <div class="cover-desc">
+                    從零開始，建立 Python 開發環境<br>
+                    安裝 Flask、OpenAI SDK 等必要套件
+                </div>
+                <div class="tag-container">
+                    <span class="highlight">Python</span>
+                    <span class="highlight">虛擬環境</span>
+                    <span class="highlight">pip install</span>
+                    <span class="highlight">.env 設定</span>
+                </div>
+                <div style="margin-top: 40px; color: #888;">
+                    📥 程式碼下載：<a href="https://github.com/ChatGPT3a01/CH2_AI_Projects" target="_blank" style="color: #2196f3;">GitHub</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 1: 學習目標 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>🎯 本單元學習目標</h2>
+                <p>完成這個 Part 後，你將擁有一個完整的 Python 開發環境：</p>
+                <div class="two-col">
+                    <div class="step-card">
+                        <h3>✅ 環境確認</h3>
+                        <p>確認 Python 和 pip 已正確安裝</p>
+                    </div>
+                    <div class="step-card">
+                        <h3>📁 專案資料夾</h3>
+                        <p>建立專案目錄結構</p>
+                    </div>
+                    <div class="step-card">
+                        <h3>🔒 虛擬環境</h3>
+                        <p>建立並啟動 venv 虛擬環境</p>
+                    </div>
+                    <div class="step-card">
+                        <h3>📦 套件安裝</h3>
+                        <p>安裝 Flask、OpenAI、python-dotenv</p>
+                    </div>
+                </div>
+                <div class="box info" style="margin-top: 30px;">
+                    <strong>💡 提示：</strong>本單元共有 <strong>12 個實作步驟</strong>，請跟著一步一步操作！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 實作 1 - 檢查 Python -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 1】檢查 Python 版本</h2>
+                <p>首先確認你的電腦已安裝 Python 3.8 以上版本。</p>
+
+                <h3>📝 操作步驟</h3>
+                <ol>
+                    <li>開啟 <strong>CMD</strong>（命令提示字元）</li>
+                    <li>輸入以下指令：</li>
+                </ol>
+
+                <pre class="cmd"><span class="prompt">C:\Users\你的名字></span> <span class="command">python --version</span></pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd"><span class="output">Python 3.11.0</span></pre>
+
+                <div class="box success">
+                    看到 <code>Python 3.8</code> 或更高版本即可繼續！
+                </div>
+
+                <div class="box error">
+                    <strong>❌ 如果出現「不是內部或外部命令」</strong><br>
+                    請前往 <a href="https://www.python.org" target="_blank">python.org</a> 下載安裝，記得勾選「Add Python to PATH」
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 實作 1 截圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 1】預期畫面</h2>
+                <img src="../截圖/ch2_python_version.png" alt="Python 版本檢查" class="screenshot">
+                <div class="box info">
+                    你的畫面應該類似上圖，顯示 Python 版本號碼。
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 實作 2 - 檢查 pip -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 2】檢查 pip 版本</h2>
+                <p>pip 是 Python 的套件管理工具，用來安裝各種函式庫。</p>
+
+                <h3>📝 操作步驟</h3>
+                <p>在 CMD 中輸入：</p>
+                <pre class="cmd"><span class="prompt">C:\Users\你的名字></span> <span class="command">pip --version</span></pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd"><span class="output">pip 23.0.1 from C:\Python311\Lib\site-packages\pip (python 3.11)</span></pre>
+
+                <div class="box success">
+                    看到 pip 版本資訊即可繼續！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 實作 3 - 建立工作目錄 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 3】建立工作目錄</h2>
+                <p>選擇一個位置存放你的專案，建議放在桌面。</p>
+
+                <h3>📝 操作步驟</h3>
+                <pre class="cmd"><span class="prompt">C:\Users\你的名字></span> <span class="command">cd Desktop</span>
+<span class="prompt">C:\Users\你的名字\Desktop></span> <span class="command">mkdir AI_Projects</span>
+<span class="prompt">C:\Users\你的名字\Desktop></span> <span class="command">cd AI_Projects</span></pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd"><span class="prompt">C:\Users\你的名字\Desktop\AI_Projects></span></pre>
+
+                <div class="box info">
+                    <strong>💡 說明：</strong><br>
+                    <code>cd</code> = 切換目錄（Change Directory）<br>
+                    <code>mkdir</code> = 建立資料夾（Make Directory）
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 實作 4 - 建立專案資料夾 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 4】建立專案資料夾</h2>
+                <p>在 AI_Projects 裡面，建立本章的專案資料夾。</p>
+
+                <h3>📝 操作步驟</h3>
+                <pre class="cmd"><span class="prompt">C:\...\AI_Projects></span> <span class="command">mkdir ch2_local_ai_app</span>
+<span class="prompt">C:\...\AI_Projects></span> <span class="command">cd ch2_local_ai_app</span></pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd"><span class="prompt">C:\Users\你的名字\Desktop\AI_Projects\ch2_local_ai_app></span></pre>
+
+                <div class="box success">
+                    現在你在專案資料夾中，接下來的所有操作都在這裡進行！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 實作 5 - 建立虛擬環境 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 5】建立虛擬環境</h2>
+                <p>虛擬環境讓每個專案的套件互不干擾，是 Python 開發的好習慣。</p>
+
+                <h3>📝 操作步驟</h3>
+                <pre class="cmd"><span class="prompt">C:\...\ch2_local_ai_app></span> <span class="command">python -m venv venv</span></pre>
+
+                <div class="box info">
+                    <strong>💡 說明：</strong><br>
+                    <code>python -m venv venv</code> = 使用 Python 的 venv 模組，建立名為 venv 的虛擬環境
+                </div>
+
+                <h3>⏳ 等待時間</h3>
+                <p>這個步驟需要 10-30 秒，請耐心等待。完成後資料夾中會出現 <code>venv</code> 資料夾。</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: 實作 6 - 啟動虛擬環境 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 6】啟動虛擬環境</h2>
+                <p>建立後要「啟動」虛擬環境才能使用。</p>
+
+                <h3>📝 Windows CMD 指令</h3>
+                <pre class="cmd"><span class="prompt">C:\...\ch2_local_ai_app></span> <span class="command">venv\Scripts\activate</span></pre>
+
+                <h3>📝 Windows PowerShell 指令</h3>
+                <pre class="cmd"><span class="command">venv\Scripts\Activate.ps1</span></pre>
+
+                <h3>✅ 預期結果</h3>
+                <pre class="cmd"><span class="output">(venv)</span> <span class="prompt">C:\...\ch2_local_ai_app></span></pre>
+
+                <div class="box success">
+                    <strong>🎉 成功！</strong>看到提示符前面的 <code>(venv)</code> 表示虛擬環境已啟動！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 虛擬環境截圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 6】預期畫面</h2>
+                <img src="../截圖/ch2_venv_activated.png" alt="虛擬環境啟動" class="screenshot">
+                <div class="box warning">
+                    <strong>⚠️ PowerShell 權限錯誤？</strong><br>
+                    如果出現錯誤，請先執行：<br>
+                    <code>Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: 實作 7-9 安裝套件 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 7-9】安裝必要套件</h2>
+                <p>確認 <code>(venv)</code> 已顯示後，依序安裝三個套件：</p>
+
+                <h3>【實作 7】安裝 Flask</h3>
+                <pre class="cmd"><span class="output">(venv)</span> <span class="prompt">C:\...></span> <span class="command">pip install flask</span></pre>
+
+                <h3>【實作 8】安裝 OpenAI SDK</h3>
+                <pre class="cmd"><span class="output">(venv)</span> <span class="prompt">C:\...></span> <span class="command">pip install openai</span></pre>
+
+                <h3>【實作 9】安裝環境變數工具</h3>
+                <pre class="cmd"><span class="output">(venv)</span> <span class="prompt">C:\...></span> <span class="command">pip install python-dotenv</span></pre>
+
+                <div class="box info">
+                    每個安裝大約需要 10-30 秒，會顯示很多下載訊息，這是正常的！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: 實作 10 - 確認安裝 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 10】確認套件安裝</h2>
+                <p>安裝完成後，確認所有套件都已正確安裝。</p>
+
+                <h3>📝 操作步驟</h3>
+                <pre class="cmd"><span class="output">(venv)</span> <span class="prompt">C:\...></span> <span class="command">pip list</span></pre>
+
+                <h3>✅ 預期結果（部分）</h3>
+                <pre class="cmd"><span class="output">Package         Version
+--------------- -------
+flask           3.0.0
+openai          1.6.1
+python-dotenv   1.0.0
+...</span></pre>
+
+                <div class="box success">
+                    看到 <code>flask</code>、<code>openai</code>、<code>python-dotenv</code> 即表示安裝成功！
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: pip list 截圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 10】預期畫面</h2>
+                <img src="../截圖/ch2_pip_list.png" alt="pip list 結果" class="screenshot">
+            </div>
+        </div>
+
+        <!-- Slide 13: 實作 11 - 建立 .env -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 11】建立 .env 檔案</h2>
+                <p>這個檔案用來安全地儲存你的 API Key。</p>
+
+                <h3>📝 操作步驟</h3>
+                <ol>
+                    <li>在 <code>ch2_local_ai_app</code> 資料夾中建立新檔案</li>
+                    <li>檔名：<code>.env</code>（注意開頭有一個點）</li>
+                    <li>輸入以下內容：</li>
+                </ol>
+
+                <pre>OPENAI_API_KEY=sk-proj-你的真實API金鑰</pre>
+
+                <div class="box error">
+                    <strong>🟥 重要警告：</strong><br>
+                    這個檔案包含你的 API 密鑰，<strong>絕對不要上傳到 GitHub！</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: 實作 12 - 建立 .gitignore -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>【實作 12】建立 .gitignore 檔案</h2>
+                <p>告訴 Git 忽略某些檔案，避免不小心上傳敏感資料。</p>
+
+                <h3>📝 操作步驟</h3>
+                <ol>
+                    <li>在同一個資料夾建立 <code>.gitignore</code> 檔案</li>
+                    <li>輸入以下內容：</li>
+                </ol>
+
+                <pre>venv/
+.env
+__pycache__/
+*.pyc</pre>
+
+                <div class="box info">
+                    <strong>💡 說明：</strong><br>
+                    <code>venv/</code> = 忽略虛擬環境資料夾<br>
+                    <code>.env</code> = 忽略環境變數檔案（含 API Key）<br>
+                    <code>__pycache__/</code> = 忽略 Python 快取
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: 完成確認 -->
+        <div class="slide">
+            <div class="content-card">
+                <h2>✅ Part 1 完成確認</h2>
+                <p>完成所有步驟後，你的專案資料夾結構應該如下：</p>
+
+                <pre>ch2_local_ai_app/
+├── venv/              ← 虛擬環境資料夾
+├── .env               ← API Key 設定檔
+└── .gitignore         ← Git 忽略清單</pre>
+
+                <h3>✅ 檢查清單</h3>
+                <ul>
+                    <li>☐ CMD 顯示 <code>(venv)</code> 標記</li>
+                    <li>☐ <code>pip list</code> 顯示 flask、openai、python-dotenv</li>
+                    <li>☐ <code>.env</code> 檔案已建立並填入 API Key</li>
+                    <li>☐ <code>.gitignore</code> 檔案已建立</li>
+                </ul>
+
+                <div class="box success" style="margin-top: 30px;">
+                    <strong>🎉 恭喜！</strong>環境準備完成，可以進入 Part 2：Flask 基礎實作！
+                
+                <div style="margin-top: 40px; display: flex; justify-content: center; gap: 20px;">
+                    <a href="index.html" style="background: #28a745; color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600;">📚 回到總覽</a>
+                    <a href="Part2_Flask基礎實作.html" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600;">下一單元 ➡️</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            }
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === totalSlides - 1;
+        }
+
+        function changeSlide(direction) { showSlide(currentSlide + direction); }
+        function goToSlide(index) { showSlide(index); }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

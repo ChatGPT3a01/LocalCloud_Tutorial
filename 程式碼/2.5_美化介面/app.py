@@ -29,7 +29,7 @@ def chat():
             return jsonify({'error': '訊息不能是空的'}), 400
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "你是一個友善的 AI 助手，用繁體中文回答問題。"},
                 {"role": "user", "content": user_message}

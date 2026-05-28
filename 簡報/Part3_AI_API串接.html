@@ -259,7 +259,7 @@ client = OpenAI(api_key=os.getenv(<span style="color:#ce9178">'OPENAI_API_KEY'</
 
                 <pre>        <span style="color:#6a9955"># 呼叫 OpenAI API</span>
         response = client.chat.completions.create(
-            model=<span style="color:#ce9178">"gpt-4o"</span>,
+            model=<span style="color:#ce9178">"gpt-5.5"</span>,
             messages=[
                 {<span style="color:#ce9178">"role"</span>: <span style="color:#ce9178">"system"</span>, <span style="color:#ce9178">"content"</span>: <span style="color:#ce9178">"你是一個友善的 AI 助手"</span>},
                 {<span style="color:#ce9178">"role"</span>: <span style="color:#ce9178">"user"</span>, <span style="color:#ce9178">"content"</span>: user_message}
@@ -299,7 +299,7 @@ client = OpenAI(api_key=os.getenv(<span style="color:#ce9178">'OPENAI_API_KEY'</
 
                 <h3>3️⃣ 呼叫 OpenAI API</h3>
                 <ul>
-                    <li><code>model="gpt-4o"</code>：使用 GPT-4o 模型</li>
+                    <li><code>model="gpt-5.5"</code>：使用 GPT-5.5 模型</li>
                     <li><code>max_tokens=500</code>：限制回應長度（控制成本）</li>
                 </ul>
             </div>

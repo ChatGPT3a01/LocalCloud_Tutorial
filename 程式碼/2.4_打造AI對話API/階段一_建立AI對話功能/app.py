@@ -47,7 +47,7 @@ def chat():
 
         # 步驟3：呼叫 OpenAI API 取得 AI 回應
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-5.6-luna",
             messages=[
                 {"role": "system", "content": "你是一個友善的 AI 助手，用繁體中文回答問題。"},
                 {"role": "user", "content": user_message}

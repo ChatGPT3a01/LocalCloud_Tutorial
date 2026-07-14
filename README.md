@@ -98,7 +98,7 @@ python app.py
 ## 技術棧
 
 - **後端**: Python 3.8+, Flask
-- **AI**: OpenAI API (GPT-5.4-mini / GPT-5.5)
+- **AI**: OpenAI API (GPT-5.6 Luna / GPT-5.6 Terra)
 - **前端**: HTML5, CSS3, JavaScript (ES6+)
 - **部署**: Render / Vercel / Railway / Netlify
 
